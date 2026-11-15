@@ -1,55 +1,29 @@
-
 workflows:
-  autoclarity-android-debug:
-    name: AutoClarity Romania APK
+  android-workflow:
+    name: AutoClarity Android Build
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
       java: 17
     scripts:
-      - name: Extract AutoClarity project
+      - name: Extract AutoClarity project (if zipped)
         script: |
-          unzip -oq AutoClarity-Romania-Android-Project.zip -d extracted
-      - name: Fix Java and Kotlin JVM targets
+          if [ -f "AutoClarity-Romania-Android-Project.zip" ] && [ ! -f "settings.gradle" ]; then
+            unzip -o AutoClarity-Romania-Android-Project.zip
+          fi
+      - name: Set up local.properties
         script: |
-          cd extracted
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("app/build.gradle.kts")
-          s = p.read_text()
-          if "compileOptions {" not in s:
-              s = s.replace("android {", """android {
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }""", 1)
-          else:
-              import re
-              s = re.sub(r'compileOptions\s*\{.*?\}', """compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }""", s, count=1, flags=re.S)
-          if "kotlinOptions {" not in s:
-              s = s.replace("android {", """android {
-              kotlinOptions {
-                  jvmTarget = "17"
-              }""", 1)
-          else:
-              import re
-              s = re.sub(r'kotlinOptions\s*\{.*?\}', """kotlinOptions {
-                  jvmTarget = "17"
-              }""", s, count=1, flags=re.S)
-          p.write_text(s)
-          PY
-      - name: Generate Gradle wrapper
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Build Android APK
         script: |
-          cd extracted
-          gradle wrapper --gradle-version 8.9
-      - name: Build debug APK
-        script: |
-          cd extracted
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug
+          else
+            gradle wrapper --gradle-version 8.9
+            chmod +x ./gradlew
+            ./gradlew assembleDebug
+          fi
     artifacts:
-      - extracted/app/build/outputs/apk/debug/app-debug.apk
-      
+      - app/build/outputs/**/*.apk
+      - app/build/outputs/**/*.aab
