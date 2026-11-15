@@ -1,0 +1,24 @@
+
+workflows:
+  autoclarity-android-debug:
+    name: AutoClarity Romania APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      java: 17
+    scripts:
+      - name: Extract AutoClarity project
+        script: |
+          unzip -oq AutoClarity-Romania-Android-Project.zip -d extracted
+      - name: Generate Gradle wrapper
+        script: |
+          cd extracted
+          gradle wrapper --gradle-version 8.9
+      - name: Build debug APK
+        script: |
+          cd extracted
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - extracted/app/build/outputs/apk/debug/app-debug.apk
+      
