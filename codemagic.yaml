@@ -10,6 +10,37 @@ workflows:
       - name: Extract AutoClarity project
         script: |
           unzip -oq AutoClarity-Romania-Android-Project.zip -d extracted
+      - name: Fix Java and Kotlin JVM targets
+        script: |
+          cd extracted
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/build.gradle.kts")
+          s = p.read_text()
+          if "compileOptions {" not in s:
+              s = s.replace("android {", """android {
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }""", 1)
+          else:
+              import re
+              s = re.sub(r'compileOptions\s*\{.*?\}', """compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }""", s, count=1, flags=re.S)
+          if "kotlinOptions {" not in s:
+              s = s.replace("android {", """android {
+              kotlinOptions {
+                  jvmTarget = "17"
+              }""", 1)
+          else:
+              import re
+              s = re.sub(r'kotlinOptions\s*\{.*?\}', """kotlinOptions {
+                  jvmTarget = "17"
+              }""", s, count=1, flags=re.S)
+          p.write_text(s)
+          PY
       - name: Generate Gradle wrapper
         script: |
           cd extracted
