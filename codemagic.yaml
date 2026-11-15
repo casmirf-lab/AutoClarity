@@ -14,16 +14,11 @@ workflows:
       - name: Set up local.properties
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
-      - name: Build Android APK
+      - name: Install Gradle & Build APK
         script: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          else
-            gradle wrapper --gradle-version 8.9
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          fi
+          brew install gradle
+          gradle assembleDebug
     artifacts:
       - app/build/outputs/**/*.apk
       - app/build/outputs/**/*.aab
+      
