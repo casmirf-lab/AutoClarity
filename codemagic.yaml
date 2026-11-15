@@ -6,10 +6,13 @@ workflows:
     environment:
       java: 17
     scripts:
-      - name: Extract AutoClarity project (if zipped)
+      - name: Extract project to root
         script: |
-          if [ -f "AutoClarity-Romania-Android-Project.zip" ] && [ ! -f "settings.gradle" ]; then
-            unzip -o AutoClarity-Romania-Android-Project.zip
+          unzip -o AutoClarity-Romania-Android-Project-fixed.zip
+          # If unzip created a wrapper subfolder, move contents to root
+          if [ ! -f "settings.gradle" ]; then
+            SUBDIR=$(find . -maxdepth 2 -name "settings.gradle" -exec dirname {} \; | head -n 1)
+            cp -r "$SUBDIR"/* .
           fi
       - name: Set up local.properties
         script: |
